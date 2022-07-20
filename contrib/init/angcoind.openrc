@@ -1,0 +1,92 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/angcoin/.angcoin" ]; then
+	ANGCOIND_DEFAULT_DATADIR="/var/lib/angcoin/.angcoin"
+else
+	ANGCOIND_DEFAULT_DATADIR="/var/lib/angcoind"
+fi
+
+ANGCOIND_CONFIGFILE=${ANGCOIND_CONFIGFILE:-/etc/angcoin/angcoin.conf}
+ANGCOIND_PIDDIR=${ANGCOIND_PIDDIR:-/var/run/angcoind}
+ANGCOIND_PIDFILE=${ANGCOIND_PIDFILE:-${ANGCOIND_PIDDIR}/angcoind.pid}
+ANGCOIND_DATADIR=${ANGCOIND_DATADIR:-${ANGCOIND_DEFAULT_DATADIR}}
+ANGCOIND_USER=${ANGCOIND_USER:-${ANGCOIN_USER:-angcoin}}
+ANGCOIND_GROUP=${ANGCOIND_GROUP:-angcoin}
+ANGCOIND_BIN=${ANGCOIND_BIN:-/usr/bin/angcoind}
+ANGCOIND_NICE=${ANGCOIND_NICE:-${NICELEVEL:-0}}
+ANGCOIND_OPTS="${ANGCOIND_OPTS:-${ANGCOIN_OPTS}}"
+
+name="ANGCOIN Core Daemon"
+description="ANGCOIN cryptocurrency P2P network daemon"
+
+command="/usr/bin/angcoind"
+command_args="-pid=\"${ANGCOIND_PIDFILE}\" \
+		-conf=\"${ANGCOIND_CONFIGFILE}\" \
+		-datadir=\"${ANGCOIND_DATADIR}\" \
+		-daemon \
+		${ANGCOIND_OPTS}"
+
+required_files="${ANGCOIND_CONFIGFILE}"
+start_stop_daemon_args="-u ${ANGCOIND_USER} \
+			-N ${ANGCOIND_NICE} -w 2000"
+pidfile="${ANGCOIND_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${ANGCOIND_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${ANGCOIND_USER}:${ANGCOIND_GROUP}" \
+	"${ANGCOIND_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${ANGCOIND_USER}:${ANGCOIND_GROUP}" \
+	"${ANGCOIND_PIDDIR}"
+
+	checkpath -f \
+	-o ${ANGCOIND_USER}:${ANGCOIND_GROUP} \
+	-m 0660 \
+	${ANGCOIND_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${ANGCOIND_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run angcoind."
+		eerror "The setting must appear in ${ANGCOIND_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"ANGCOIN Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

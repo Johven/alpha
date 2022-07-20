@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[angcoin.qt-translation-021x]
+file_filter = src/qt/locale/angcoin_<lang>.ts
+source_file = src/qt/locale/angcoin_en.ts
+source_lang = en

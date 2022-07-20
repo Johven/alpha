@@ -1,0 +1,33 @@
+# /etc/conf.d/angcoind: config file for /etc/init.d/angcoind
+
+# Config file location
+#ANGCOIND_CONFIGFILE="/etc/angcoin/angcoin.conf"
+
+# What directory to write pidfile to?  (created and owned by $ANGCOIND_USER)
+#ANGCOIND_PIDDIR="/var/run/angcoind"
+
+# What filename to give the pidfile
+#ANGCOIND_PIDFILE="${ANGCOIND_PIDDIR}/angcoind.pid"
+
+# Where to write angcoind data (be mindful that the blockchain is large)
+#ANGCOIND_DATADIR="/var/lib/angcoind"
+
+# User and group to own angcoind process
+#ANGCOIND_USER="angcoin"
+#ANGCOIND_GROUP="angcoin"
+
+# Path to angcoind executable
+#ANGCOIND_BIN="/usr/bin/angcoind"
+
+# Nice value to run angcoind under
+#ANGCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#ANGCOIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for angcoind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+ANGCOIND_SIGTERM_TIMEOUT=600
